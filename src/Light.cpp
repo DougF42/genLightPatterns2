@@ -93,14 +93,14 @@ void LightGroup::pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b)
  *     1 byte    len    Length of name string
  *     len bytes  char  The name of this group.
  *     2 byte    cnt    The number of entries.
- *     5*cnt bytes  'cnt' Entries follow.
- *     ENTRY (5 bytes per entry):
- *      1 row
- *      1 col
- *      1 red
- *      1 green
- *      1 blue
- *
+ *     8 * cnt bytes  'cnt' Entries follow.
+ *     ENTRY (8 bytes per entry):
+ *       1 row
+ *       1 col
+ *       1 red
+ *       1 green
+ *       1 blue
+ *       3 reserved (Must be zero).
  */
 void LightGroup::generate2(const char *path)
 {
@@ -121,16 +121,16 @@ void LightGroup::generate2(const char *path)
 	// open file
 	int fout=creat(fname.c_str(),S_IRWXU|S_IRWXG|S_IRWXO);
 	// HEADER
-	write(fout, "LEDS",4);  // Header
-	char l = groupName.size();  // length of group name
+	write(fout, "LEDS",4);                          // Header
+	char l = groupName.size();                      // length of group name
 	write(fout, &l,1);
 	write(fout, groupName.c_str(), groupName.size()); // file name
 
-	uint16_t cnt=(uint16_t)this->getNoOfLeds(); // Number of entries. NOTE: CNT MUST BE 4 bytes!
+	uint16_t cnt=(uint16_t)this->getNoOfLeds();
 	if (sizeof(cnt) != 2 ) {
 		fprintf(stderr,"ERROR in LightGroup::generate2 - count is %ld bytes - should be 2 bytes!!!\n", sizeof(cnt));
 	}
-	write(fout, &cnt, sizeof(cnt));
+	write(fout, &cnt, 2);                             // Number of entries. (2 bytes)
 
 	// Per entry...
 
@@ -139,16 +139,19 @@ void LightGroup::generate2(const char *path)
 
 	for (entry=this->first; entry!=nullptr; entry=entry->next)
 	{
+		unsigned char fill[3];
+		bzero(fill,3);
 		row=entry->row;
 		col=entry->col;
 		red   = (entry->rgb>>16) & 0xff;
 		green = (entry->rgb>>8)  & 0xff;
 		blue  = entry->rgb       & 0xff;
-		write(fout,&row,1);
-		write(fout,&col,1);
-		write(fout,&red,1);
-		write(fout,&green,1);
-		write(fout,&blue,1);
+		write(fout,&row,1);                               // row
+		write(fout,&col,1);                               // col
+		write(fout,&red,1);                               // red
+		write(fout,&green,1);                             // green
+		write(fout,&blue,1);                              // blue
+		write(fout,fill, sizeof(fill));                   // Fill (3 bytes) - all zeros.
 	}
 	printf("In group %15s there are %3d entries \n", groupName.c_str(),cnt);
 	close(fout);
@@ -189,5 +192,37 @@ void LightGroup::generate(FILE *outfile) {
 	}
 	fprintf(outfile, "}; \n");
 	fprintf(outfile,"// End %s\n\n", this->listName.c_str());
+	return;
+}
+
+/**
+ * Generate the arduino array definition
+ *   to put this array in flash.
+ *   const int PROGMEMname[] =
+ *       {
+ *       r,c,b;
+ *       }
+ *
+ * @param fname - the file name to output to.
+ *     (note: We APPEND to this file - if desired,
+ *      it should be removed by an external routine (e.g.: main)
+ */
+void LightGroup::print() {
+	printf( "// Begin  %s:\n", this->listName.c_str());
+	printf( "#include <Arduino.h>\n");
+	printf( "const PROGMEM int %s[] = \n", this->listName.c_str());
+	printf( "{\n");
+	Light *cur;
+
+	for (cur=first; cur!=nullptr; cur=cur->next)
+	{
+		if (cur->next !=nullptr)
+			printf( "Row,Col,RGB:  %d,%d,%d,\n", cur->row, cur->col, cur->rgb);
+		else
+			printf( "Row,Col,RGB:  %d,%d,%d\n", cur->row, cur->col, cur->rgb);
+
+	}
+	printf( "}; \n");
+	printf("// End %s\n\n", this->listName.c_str());
 	return;
 }

@@ -54,7 +54,7 @@ public:
    void pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b);
    void generate(FILE *outfile);
    void generate2(const char *outfile);
-
+   void print();
    inline int getRows()  { return(noOfRows); }
    inline int getCols()  { return(noOfCols); }
    inline const char *getName() { return(listName.c_str()); }
