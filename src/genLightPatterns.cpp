@@ -14,6 +14,7 @@ using namespace std;
 #include "Light.h"
 #include "Picture.h"
 
+
 int main(int argc, char *argv[]) {
 	initAll();
 	if (argc<2) {

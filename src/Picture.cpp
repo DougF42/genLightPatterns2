@@ -9,6 +9,7 @@
 #include "Picture.h"
 
 // This is where we actually instantiate the groups
+LightGroup grp_Test   ("Test",   noRows, noCols);
 LightGroup grp_Sky    ("Sky",    noRows, noCols);
 LightGroup grp_SkyBlue("SkyBlue",noRows, noCols);
 LightGroup grp_Ocean  ("Ocean",  noRows, noCols);
@@ -17,6 +18,19 @@ LightGroup grp_Land   ("Land",   noRows, noCols);
 LightGroup grp_Orange ("Orange", noRows, noCols);
 LightGroup grp_Yellow ("Yellow", noRows, noCols);
 
+void Init_Test()
+{
+	// Test pattern - a cross. Row
+	for (int row=0; row<noRows/2; row++)
+	{
+		grp_Test.pushRGB( noCols/2, row, 125, 0, 0);  // One row (red)
+	}
+
+	for (int col=0; col<noCols/2; col++)
+		{
+		grp_Test.pushRGB(col, noRows/2, 0,125,0);  // One row (green)
+		}
+}
 
 void Init_Sky()
 {
@@ -116,6 +130,7 @@ void Init_Yellow()
 
 void initAll()
 {
+  Init_Test();
   Init_Sky();
   Init_SkyBlue();
   Init_Ocean();
@@ -128,6 +143,7 @@ void initAll()
 
 
 void generateFlash(const char * path) {
+	grp_Test.generate2(path);
 	grp_Sky.generate2(path);
 	grp_SkyBlue.generate2(path);
 	grp_Ocean.generate2(path);

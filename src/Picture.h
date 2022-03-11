@@ -15,6 +15,7 @@
 #define noRows 16
 #define noCols 15
 
+extern LightGroup grp_test;
 extern LightGroup grp_Ocean ;
 extern LightGroup grp_Ocean2;
 extern LightGroup grp_Sky   ;
