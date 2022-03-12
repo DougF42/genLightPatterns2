@@ -113,27 +113,27 @@ void LightGroup::generate2(const char *path)
 	groupName.append(".led");
 
 	// Now create the file name
-
 	std::string fname= path;
 	fname.append("/");
 	fname.append(groupName);
 
 	// open file
 	int fout=creat(fname.c_str(),S_IRWXU|S_IRWXG|S_IRWXO);
-	// HEADER
+
+	// HEADER - LEDS + FileName
 	write(fout, "LEDS",4);                          // Header
 	char l = groupName.size();                      // length of group name
 	write(fout, &l,1);
 	write(fout, groupName.c_str(), groupName.size()); // file name
 
-	uint16_t cnt=(uint16_t)this->getNoOfLeds();
+	// COUNT
+	uint16_t cnt=(uint16_t)this->getNoOfLeds()+1;
 	if (sizeof(cnt) != 2 ) {
 		fprintf(stderr,"ERROR in LightGroup::generate2 - count is %ld bytes - should be 2 bytes!!!\n", sizeof(cnt));
 	}
 	write(fout, &cnt, 2);                             // Number of entries. (2 bytes)
 
-	// Per entry...
-
+	// EACH ENTRY
 	Light *entry;
 	uint8_t row,col,red,green,blue;
 

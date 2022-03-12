@@ -21,15 +21,19 @@ LightGroup grp_Yellow ("Yellow", noRows, noCols);
 void Init_Test()
 {
 	// Test pattern - a cross. Row
+	int count=0;
 	for (int row=0; row<noRows/2; row++)
 	{
 		grp_Test.pushRGB( noCols/2, row, 125, 0, 0);  // One row (red)
+		count++;
 	}
 
 	for (int col=0; col<noCols/2; col++)
 		{
 		grp_Test.pushRGB(col, noRows/2, 0,125,0);  // One row (green)
+		count++;
 		}
+	fprintf(stderr,"IN Init_Test, we count %d entries\n", count);
 }
 
 void Init_Sky()
