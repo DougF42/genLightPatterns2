@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "ERROR: Missing target file prefix!\n");
 		return(-1);
 	}
-	fprintf(stderr, "PATH is %s\n", argv[1]);
+	fprintf(stdout, "PATH is %s\n", argv[1]);
 	generateFlash(argv[1]);
 	return 0;
 }

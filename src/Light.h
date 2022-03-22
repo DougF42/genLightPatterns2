@@ -7,6 +7,8 @@
 #include <string>
 
  /*
+  * @brief Store each element in the LED array.
+  *
   * For each element in a group of lights, indicate the position (x,y)
   * and relative brightness.
   *
@@ -17,11 +19,15 @@
 {
   public:
     Light(int r, int c, int _rgb=255);
+    Light(int r, int c, int _red, int _green, int _blue);
     ~Light();
 
     int row;
     int col;
     unsigned int rgb;
+    uint8_t red();
+    uint8_t green();
+    uint8_t blue();
     Light *next;
 };
 
@@ -52,7 +58,6 @@ public:
    * Define a new 'light', and add it to this list
    */
    void pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b);
-   void generate(FILE *outfile);
    void generate2(const char *outfile);
    void print();
    inline int getRows()  { return(noOfRows); }

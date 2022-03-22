@@ -28,11 +28,34 @@ Light::Light(int r, int c, int  _rgb)
 	next = nullptr;
 }
 
+Light::Light(int r, int c, int _red, int _green, int _blue)
+{
+	row = r;
+	col = c;
+	rgb = ((_red&0xff)<<16) | ((_green&0xff)<<8) | (_blue&0xff);
+	next = nullptr;
+}
+
+
 Light::~Light()
 {
 	// TODO Auto-generated destructor stub
 }
 
+uint8_t Light::red()
+{
+	return ((rgb>>16)&0xff);
+}
+
+uint8_t Light::green()
+{
+	return ((rgb>>8)&0xff);
+}
+
+uint8_t Light::blue()
+{
+	return(rgb&0xff);
+}
 
 LightGroup::LightGroup(std::string lname, int _rowCount, int _colCount)
 {
@@ -44,6 +67,7 @@ LightGroup::LightGroup(std::string lname, int _rowCount, int _colCount)
 	noOfCols = _colCount;
 	noOfLeds=0L;
 }
+
 
 /**
  * Unlink and delete the entries
@@ -65,10 +89,7 @@ LightGroup::~LightGroup() {
  */
 void LightGroup::pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b)
 {
-	// Convert rgb to color
-	uint32_t color = (r<<16) | (g<<8) | (b);
-
-	Light *alight = new Light(row, col, color);
+	Light *alight = new Light(row, col, r, g, b);
 	if (first == nullptr) {
 		first=alight;
 		last=alight;
@@ -86,112 +107,43 @@ void LightGroup::pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b)
  * Output this array to flash.
  *
  * @param path - The path of the directory to write into.
- *      The name of the resuling file has the grp_ prefix
- *      removed.
+ *
+ *      The name of the resulting file is {PATH}/{groupname}.led
+ *      each line is terminated with '\n'.
+ *
  * FORMAT of FILE:
- *     4 bytes   "LEDS" Identifies this as type of file
- *     1 byte    len    Length of name string
- *     len bytes  char  The name of this group.
- *     2 byte    cnt    The number of entries.
- *     8 * cnt bytes  'cnt' Entries follow.
- *     ENTRY (8 bytes per entry):
- *       1 row
- *       1 col
- *       1 red
- *       1 green
- *       1 blue
- *       3 reserved (Must be zero).
+ *     line 1:  "LEDS"
+ *     Line 2: Name of this group
+ *     Line 3:  cnt                  The number of entries.
+ *     Line 4...<cnt>+3 contains one entry each:
+ *     	row,col,red,green,blue
+ *     	       each is space separated. Multiple spaces in a row are treaded as single space.
  */
 void LightGroup::generate2(const char *path)
 {
-	// First, determine the 8.3 version (shortened) groupName
-	size_t pos=this->listName.find_last_of('_');
-	if (pos == std::string::npos) {
-		pos=0;
-	}
-	std::string groupName=listName.substr(pos);
-	groupName.append(".led");
-
-	// Now create the file name
-	std::string fname= path;
-	fname.append("/");
-	fname.append(groupName);
+	char fname[128];
+	sprintf(fname, "%s/%s.led", path, listName.c_str());
 
 	// open file
-	int fout=creat(fname.c_str(),S_IRWXU|S_IRWXG|S_IRWXO);
+	FILE *fout=fopen(fname, "w");
 
 	// HEADER - LEDS + FileName
-	write(fout, "LEDS",4);                          // Header
-	char l = groupName.size();                      // length of group name
-	write(fout, &l,1);
-	write(fout, groupName.c_str(), groupName.size()); // file name
-
-	// COUNT
-	uint16_t cnt=(uint16_t)this->getNoOfLeds()+1;
-	if (sizeof(cnt) != 2 ) {
-		fprintf(stderr,"ERROR in LightGroup::generate2 - count is %ld bytes - should be 2 bytes!!!\n", sizeof(cnt));
-	}
-	write(fout, &cnt, 2);                             // Number of entries. (2 bytes)
+	fprintf(fout, "LEDS\n");                          // Header
+	fprintf(fout, "%s\n", listName.c_str());
+	fprintf(fout, "%ld\n", getNoOfLeds()+1);
 
 	// EACH ENTRY
 	Light *entry;
-	uint8_t row,col,red,green,blue;
 
 	for (entry=this->first; entry!=nullptr; entry=entry->next)
 	{
 		unsigned char fill[3];
 		bzero(fill,3);
-		row=entry->row;
-		col=entry->col;
-		red   = (entry->rgb>>16) & 0xff;
-		green = (entry->rgb>>8)  & 0xff;
-		blue  = entry->rgb       & 0xff;
-		write(fout,&row,1);                               // row
-		write(fout,&col,1);                               // col
-		write(fout,&red,1);                               // red
-		write(fout,&green,1);                             // green
-		write(fout,&blue,1);                              // blue
-		write(fout,fill, sizeof(fill));                   // Fill (3 bytes) - all zeros.
+		fprintf(fout, "%d %d %d %d %d\n", entry->row, entry->col,
+				entry->red(), entry->green(), entry->blue());
 	}
-	printf("In group %15s there are %3d entries \n", groupName.c_str(),cnt);
-	close(fout);
-	return;
-}
-
-/**
- * Generate the arduino array definition
- *   to put this array in flash.
- *   const int PROGMEMname[] =
- *       {
- *       r,c,b;
- *       }
- *
- * @param fname - the file name to output to.
- *     (note: We APPEND to this file - if desired,
- *      it should be removed by an external routine (e.g.: main)
- */
-void LightGroup::generate(FILE *outfile) {
-	fprintf(outfile, "// Begin  %s:\n", this->listName.c_str());
-	fprintf(outfile, "#include <Arduino.h>\n");
-	fprintf(outfile, "const PROGMEM int %s[] = \n", this->listName.c_str());
-	fprintf(outfile, "{\n");
-	Light *cur;
-
-	for (cur=first; cur!=nullptr; cur=cur->next)
-	{
-		/***
-		if (cur->next !=nullptr)
-			fprintf(outfile, "  {%d,%d,%6X},\n", cur->row, cur->col, cur->rgb);
-		else
-			fprintf(outfile, "  {%d,%d,%6X}\n", cur->row, cur->col, cur->rgb);
-		**/
-		if (cur->next !=nullptr)
-			fprintf(outfile, "  %d,%d,%d,\n", cur->row, cur->col, cur->rgb);
-		else
-			fprintf(outfile, "  %d,%d,%d\n", cur->row, cur->col, cur->rgb);
-	}
-	fprintf(outfile, "}; \n");
-	fprintf(outfile,"// End %s\n\n", this->listName.c_str());
+	printf("File %s written with  %ld entries \n", fname,getNoOfLeds()+1);
+	fclose(fout);
 	return;
 }
 
@@ -208,21 +160,21 @@ void LightGroup::generate(FILE *outfile) {
  *      it should be removed by an external routine (e.g.: main)
  */
 void LightGroup::print() {
-	printf( "// Begin  %s:\n", this->listName.c_str());
-	printf( "#include <Arduino.h>\n");
-	printf( "const PROGMEM int %s[] = \n", this->listName.c_str());
-	printf( "{\n");
+	printf( "Print light group %s. %ld entries:\n", this->listName.c_str(), this->noOfLeds+1);
 	Light *cur;
 
 	for (cur=first; cur!=nullptr; cur=cur->next)
 	{
+		printf( "Row,Col,RGB:  %d,%d,%d,%d,%d",
+				cur->row, cur->col,
+				cur->red(), cur->green(), cur->blue());
+
 		if (cur->next !=nullptr)
-			printf( "Row,Col,RGB:  %d,%d,%d,\n", cur->row, cur->col, cur->rgb);
+			printf(",\n");
 		else
-			printf( "Row,Col,RGB:  %d,%d,%d\n", cur->row, cur->col, cur->rgb);
+			printf("\n");
 
 	}
-	printf( "}; \n");
 	printf("// End %s\n\n", this->listName.c_str());
 	return;
 }

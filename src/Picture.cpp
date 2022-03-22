@@ -9,31 +9,47 @@
 #include "Picture.h"
 
 // This is where we actually instantiate the groups
-LightGroup grp_Test   ("Test",   noRows, noCols);
-LightGroup grp_Sky    ("Sky",    noRows, noCols);
-LightGroup grp_SkyBlue("SkyBlue",noRows, noCols);
-LightGroup grp_Ocean  ("Ocean",  noRows, noCols);
-LightGroup grp_Ocean2 ("Ocean2", noRows, noCols);
-LightGroup grp_Land   ("Land",   noRows, noCols);
-LightGroup grp_Orange ("Orange", noRows, noCols);
-LightGroup grp_Yellow ("Yellow", noRows, noCols);
+LightGroup grp_Test   ("test",   noRows, noCols);
+LightGroup grp_Sky    ("sky",    noRows, noCols);
+LightGroup grp_SkyBlue("skyBlue",noRows, noCols);
+LightGroup grp_Ocean  ("ocean",  noRows, noCols);
+LightGroup grp_Ocean2 ("ocean2", noRows, noCols);
+LightGroup grp_Land   ("land",   noRows, noCols);
+LightGroup grp_Orange ("orange", noRows, noCols);
+LightGroup grp_Yellow ("yellow", noRows, noCols);
 
 void Init_Test()
 {
-	// Test pattern - a cross. Row
+	static const int lumins=64;
+
+	// Test pattern - a cross.
+	// Vertical bar RED
 	int count=0;
 	for (int row=0; row<noRows/2; row++)
 	{
-		grp_Test.pushRGB( noCols/2, row, 125, 0, 0);  // One row (red)
+		grp_Test.pushRGB( noCols/2, row, lumins, 0, 0);  // One row (red)
 		count++;
 	}
 
+	// Horizonal bar GREEN
 	for (int col=0; col<noCols/2; col++)
 		{
-		grp_Test.pushRGB(col, noRows/2, 0,125,0);  // One row (green)
+		grp_Test.pushRGB(col, noRows/2, 0,lumins,0);  // One row (green)
 		count++;
 		}
-	fprintf(stderr,"IN Init_Test, we count %d entries\n", count);
+
+	// Surround with BLUE
+	for (int col=0; col<noCols; col++)
+	{
+		grp_Test.pushRGB(col, 0, 0,0,lumins);
+		grp_Test.pushRGB(col, noRows, 0,0,lumins);
+	}
+	for (int row=0; row<noRows; row++)
+	{
+		grp_Test.pushRGB(0,row,0,0,lumins);
+		grp_Test.pushRGB(noCols, row, 0,0,lumins);
+	}
+
 }
 
 void Init_Sky()
