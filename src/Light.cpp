@@ -127,10 +127,8 @@ void LightGroup::generate2(const char *path)
 	// open file
 	FILE *fout=fopen(fname, "w");
 
-	// HEADER - LEDS + FileName
-	fprintf(fout, "LEDS\n");                          // Header
-	fprintf(fout, "%s\n", listName.c_str());
-	fprintf(fout, "%ld\n", getNoOfLeds()+1);
+	// HEADER - LEDS, version and no of leds.
+	fprintf(fout, "LEDS 1 %ld\n", getNoOfLeds()+1);
 
 	// EACH ENTRY
 	Light *entry;
