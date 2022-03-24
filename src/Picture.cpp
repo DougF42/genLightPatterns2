@@ -163,7 +163,8 @@ void initAll()
 
 
 void generateFlash(const char * path) {
-	grp_Test.print();
+//	grp_Test.print();
+
 	grp_Test.generate2(path);
 	grp_Sky.generate2(path);
 	grp_SkyBlue.generate2(path);

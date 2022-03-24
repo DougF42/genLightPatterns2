@@ -15,7 +15,7 @@ using namespace std;
 #include "Picture.h"
 
 
-int main(int argc, char *argv[]) {
+extern "C" int main(int argc, char *argv[]) {
 	initAll();
 	if (argc<2) {
 		fprintf(stderr, "ERROR: Missing target file prefix!\n");

@@ -112,12 +112,9 @@ void LightGroup::pushRGB(int row, uint8_t col, uint8_t r, uint8_t g, uint8_t b)
  *      each line is terminated with '\n'.
  *
  * FORMAT of FILE:
- *     line 1:  "LEDS"
- *     Line 2: Name of this group
- *     Line 3:  cnt                  The number of entries.
- *     Line 4...<cnt>+3 contains one entry each:
- *     	row,col,red,green,blue
- *     	       each is space separated. Multiple spaces in a row are treaded as single space.
+ *     line 1:  "LEDS" <version> <count>
+ *     Line 2..<cnt>+2 contains one pixel definition per line:
+ *     	<row> <col> <red> <green> <blue>
  */
 void LightGroup::generate2(const char *path)
 {
@@ -128,9 +125,7 @@ void LightGroup::generate2(const char *path)
 	FILE *fout=fopen(fname, "w");
 
 	// HEADER - LEDS + FileName
-	fprintf(fout, "LEDS\n");                          // Header
-	fprintf(fout, "%s\n", listName.c_str());
-	fprintf(fout, "%ld\n", getNoOfLeds()+1);
+	fprintf(fout, "LEDS 1.0 %ld\n", getNoOfLeds()+1); // Header
 
 	// EACH ENTRY
 	Light *entry;
